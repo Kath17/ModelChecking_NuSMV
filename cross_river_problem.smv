@@ -1,0 +1,73 @@
+MODULE main
+	VAR
+		granjero_loc: {lado1, lado2};
+		lobo_loc: {lado1, lado2};
+		oveja_loc: {lado1, lado2};
+		repollo_loc: {lado1, lado2};
+
+		hacer: {pensar, cruzar, todoscruzados};
+		tomar: {none, lobo, oveja, repollo}; 
+	ASSIGN
+		init(granjero_loc) := lado1;
+		init(lobo_loc) := lado1;
+		init(oveja_loc) := lado1;
+		init(repollo_loc) := lado1;
+		init(hacer) := pensar;
+		init(tomar) := none;
+
+		next(granjero_loc) := case
+			hacer = cruzar: case
+				granjero_loc = lado1: lado2;
+				granjero_loc = lado2: lado1;
+			esac;
+			TRUE: granjero_loc;
+		esac;
+
+		next(hacer) := case
+			granjero_loc = lado2 &
+			lobo_loc = lado2 &
+			oveja_loc = lado2 &
+			repollo_loc = lado2 : todoscruzados;
+			hacer = pensar: cruzar;
+			TRUE: pensar;
+		esac;
+
+		next(tomar) := 
+			none union
+			case
+				hacer = pensar & lobo_loc = granjero_loc: lobo;
+				TRUE: none;
+			esac union
+			case
+				hacer = pensar & oveja_loc = granjero_loc: oveja;
+				TRUE: none;
+			esac union
+			case
+				hacer = pensar & repollo_loc = granjero_loc: repollo ;
+				TRUE: none;
+			esac;
+
+		next(lobo_loc) := case
+			hacer = cruzar & tomar = lobo: next(granjero_loc);
+			TRUE: lobo_loc;
+		esac;
+		next(oveja_loc) := case
+			hacer = cruzar & tomar = oveja: next(granjero_loc);
+			TRUE: oveja_loc;
+		esac;
+		next(repollo_loc) := case
+			hacer = cruzar & tomar = repollo: next(granjero_loc);
+			TRUE: repollo_loc;
+		esac;
+
+
+CTLSPEC NAME solution := 
+	! E [(
+        ((granjero_loc != lobo_loc  ) -> (lobo_loc   != oveja_loc)) & 
+        ((granjero_loc != oveja_loc) -> (oveja_loc != repollo_loc))  
+      ) U(
+        granjero_loc = lado2 &
+        lobo_loc = lado2 & 
+        oveja_loc = lado2 & 
+        repollo_loc = lado2
+      ) ]
